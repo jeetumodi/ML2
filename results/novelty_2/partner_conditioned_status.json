@@ -1,0 +1,89 @@
+{
+  "experiment": "Novelty_2_Partner_Conditioned_Interface_Prediction",
+  "status": "BLOCKED_MISSING_PAIRED_DATA",
+  "paired_data_available": false,
+  "reason": "All available benchmarks provide only single-chain partner-independent residue labels.",
+  "architectural_status": "IMPLEMENTED_AND_UNIT_TESTED",
+  "mechanics_test": {
+    "architecture_name": "CrossProteinEGCPPIS",
+    "parameters_count": 46341,
+    "output_shape": [
+      40
+    ],
+    "loss_value": 0.7632705569267273,
+    "gradients_computed": true,
+    "test_status": "PASSED"
+  },
+  "audited_files": {
+    "Test_60.fa": {
+      "file": "Datasets\\Test_60.fa",
+      "total_entries": 60,
+      "sample_ids": [
+        "2v9tA",
+        "4h3kB",
+        "3uvjA"
+      ],
+      "is_paired": false,
+      "status": "REJECTED_PARTNER_INDEPENDENT_ONLY",
+      "validation_failures": [
+        "Headers represent isolated single chains (e.g. '1a2yA'), missing interacting partner chain ID.",
+        "No inter-chain distance matrices (L_receptor x L_partner) found in feature directories.",
+        "Residue labels represent partner-independent PPIS ground-truth, not partner-conditioned interaction."
+      ]
+    },
+    "Train_335.fa": {
+      "file": "Datasets\\Train_335.fa",
+      "total_entries": 334,
+      "sample_ids": [
+        "1f60B",
+        "4iu2B",
+        "3f6qB"
+      ],
+      "is_paired": false,
+      "status": "REJECTED_PARTNER_INDEPENDENT_ONLY",
+      "validation_failures": [
+        "Headers represent isolated single chains (e.g. '1a2yA'), missing interacting partner chain ID.",
+        "No inter-chain distance matrices (L_receptor x L_partner) found in feature directories.",
+        "Residue labels represent partner-independent PPIS ground-truth, not partner-conditioned interaction."
+      ]
+    },
+    "Test_315-28.fa": {
+      "file": "Datasets\\GraphPPIS\\Test_315-28.fa",
+      "total_entries": 287,
+      "sample_ids": [
+        "4YOCA",
+        "5WMMA",
+        "5E6UA"
+      ],
+      "is_paired": false,
+      "status": "REJECTED_PARTNER_INDEPENDENT_ONLY",
+      "validation_failures": [
+        "Headers represent isolated single chains (e.g. '1a2yA'), missing interacting partner chain ID.",
+        "No inter-chain distance matrices (L_receptor x L_partner) found in feature directories.",
+        "Residue labels represent partner-independent PPIS ground-truth, not partner-conditioned interaction."
+      ]
+    },
+    "UBtest_31-6.fa": {
+      "file": "Datasets\\GraphPPIS\\UBtest_31-6.fa",
+      "total_entries": 25,
+      "sample_ids": [
+        "3mceB",
+        "1cdbA",
+        "1shuX"
+      ],
+      "is_paired": false,
+      "status": "REJECTED_PARTNER_INDEPENDENT_ONLY",
+      "validation_failures": [
+        "Headers represent isolated single chains (e.g. '1a2yA'), missing interacting partner chain ID.",
+        "No inter-chain distance matrices (L_receptor x L_partner) found in feature directories.",
+        "Residue labels represent partner-independent PPIS ground-truth, not partner-conditioned interaction."
+      ]
+    }
+  },
+  "required_data_specification": [
+    "1. Co-crystallized or docked multi-chain complex PDB files with both receptor and partner chains.",
+    "2. Pairwise inter-chain residue distance maps (d_ij = min_atom ||x_A,i - x_B,j||_2).",
+    "3. Partner-specific interface labels defined by inter-chain distance cutoff (e.g. d_ij < 5.0 Angstroms).",
+    "4. Complex-level sequence-identity non-redundant training and testing splits (e.g. Dockground or DBPBench)."
+  ]
+}
