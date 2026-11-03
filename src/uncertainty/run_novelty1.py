@@ -12,6 +12,7 @@ Executes:
 import os
 import sys
 import json
+import argparse
 import numpy as np
 import pandas as pd
 import torch
@@ -165,6 +166,11 @@ def plot_uncertainty_diagnostics(
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Novelty 1: Calibrated Uncertainty")
+    parser.add_argument("--checkpoint", type=str, default=os.path.join(REPO_ROOT, "model_save", "best_model_8_0.6406474225359946.pth"), help="Path to checkpoint")
+    parser.add_argument("--force-mc", action="store_true", default=True, help="Force recomputing MC-Dropout passes")
+    args = parser.parse_args()
+
     out_dir = os.path.join(REPO_ROOT, "results", "novelty_1")
     os.makedirs(out_dir, exist_ok=True)
     baseline_dir = os.path.join(REPO_ROOT, "results", "baseline")
@@ -214,18 +220,23 @@ def main():
     print(f"Isotonic Scaled:       ECE = {metrics_iso['ece']:.4f}, Brier = {metrics_iso['brier_score']:.4f}, NLL = {metrics_iso['nll']:.4f}")
 
     # 5. Run Monte Carlo Dropout on Test_60
-    checkpoint_path = os.path.join(REPO_ROOT, "model_save", "best_model_27_0.6545215546121214.pth")
+    checkpoint_path = args.checkpoint
+    if not os.path.exists(checkpoint_path):
+        checkpoint_path = os.path.join(REPO_ROOT, "model_save", "best_model_8_0.6406474225359946.pth")
+    if not os.path.exists(checkpoint_path):
+        checkpoint_path = os.path.join(REPO_ROOT, "model_save", "best_model_13_0.630814106504997.pth")
     if not os.path.exists(checkpoint_path):
         checkpoint_path = os.path.join(REPO_ROOT, "model_save", "best_model.pth")
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Loading checkpoint for MC-Dropout: {checkpoint_path}")
     model = PPI_Model(liner_dim=115, embbing=128)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     if device == "cuda":
         model = model.cuda()
 
     mc_cache_path = os.path.join(out_dir, "mc_results_cache.npz")
-    if os.path.exists(mc_cache_path):
+    if os.path.exists(mc_cache_path) and not args.force_mc:
         print(f"Loading cached MC Dropout results from {mc_cache_path}...")
         cached = np.load(mc_cache_path)
         mc_results = {

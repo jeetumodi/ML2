@@ -35,7 +35,6 @@ Key findings:
 ```
 EGCPPIS/
 ├── .venv/                         # Local Python 3.10 virtualenv (binary execution restricted by WDAC)
-├── Dataset -> Datasets            # Directory Junction
 ├── Datasets/                      # Benchmark FASTA files and splits
 │   ├── Test_60.fa                 # 60 test proteins (bound structures)
 │   ├── Train_335.fa               # 334 training proteins

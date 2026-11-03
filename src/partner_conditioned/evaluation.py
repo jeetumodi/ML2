@@ -11,6 +11,7 @@ Executes:
 import os
 import sys
 import json
+from typing import Dict, Any
 import torch
 import numpy as np
 
@@ -119,6 +120,7 @@ def main():
         json.dump(report, f, indent=2)
 
     # 4. Generate Markdown Specification
+    repo_root_fwd = REPO_ROOT.replace('\\', '/')
     spec_md = f"""# Novelty 2: Partner-Conditioned Interface Prediction Specification
 
 ## Experiment Status: `{audit['experiment_status']}`
@@ -131,7 +133,7 @@ In accordance with strict scientific integrity principles:
 > **"Mark the experiment BLOCKED_MISSING_PAIRED_DATA in the results."**
 
 ### 2. Implemented Neural Architecture
-The modular partner-conditioned architecture [`CrossProteinEGCPPIS`](file:///{REPO_ROOT.replace('\\', '/')}/src/partner_conditioned/cross_protein_model.py) has been implemented and verified:
+The modular partner-conditioned architecture [`CrossProteinEGCPPIS`](file:///{repo_root_fwd}/src/partner_conditioned/cross_protein_model.py) has been implemented and verified:
 - **Intra-chain Encoding:** Equivariant feature mapping for Receptor $A$ and Partner $B$.
 - **Inter-chain Geometric Cross-Attention:** Attention weights dynamically penalized by Euclidean distance $D_{{AB}}$:
   $$A_{{ij}} = \\text{{softmax}}\\left(\\frac{{Q_i K_j^T}}{{\\sqrt{{d}}}} - \\gamma \\cdot \\text{{softplus}}(D_{{ij}})\\right)$$

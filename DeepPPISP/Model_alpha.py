@@ -124,7 +124,7 @@ class atom_Model(nn.Module):
         atom_onehot_embedding = self.gcn_x3(atom_onehot_embedding,edge_index_atom)
         atom_onehot_embedding = self.gcn_x4(atom_onehot_embedding,edge_index_atom)
 
-        feats_atom = atom2residue(atom_onehot_embedding.cpu(), resid_embedding.squeeze().cpu(), res2atom_map).cuda()     # 他就是原子特征
+        feats_atom = atom2residue(atom_onehot_embedding.cpu(), resid_embedding.squeeze().cpu(), res2atom_map).to(resid_embedding.device)     # 他就是原子特征
 
         # feats_atom = self.ln(feats_atom)
 

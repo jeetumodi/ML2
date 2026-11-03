@@ -14,6 +14,7 @@ import sys
 import json
 import time
 import random
+import argparse
 import numpy as np
 import pandas as pd
 import torch
@@ -75,7 +76,7 @@ def run_model_inference(model, dataset, device="cuda"):
                 atom_onehot_embedding = atom_onehot_embedding.cuda().float()
                 edge_index_atom = edge_index_atom.cuda()
                 coords_atom = coords_atom.cuda().float()
-                res2atom = res2atom.cuda()
+                res2atom = res2atom.cuda().to(torch.int64)
             else:
                 node_features = node_features.float()
                 bert_var = bert_data.float()
@@ -84,7 +85,7 @@ def run_model_inference(model, dataset, device="cuda"):
                 atom_onehot_embedding = atom_onehot_embedding.float()
                 edge_index_atom = edge_index_atom
                 coords_atom = coords_atom.float()
-                res2atom = res2atom.float()
+                res2atom = res2atom.to(torch.int64)
 
             output, _ = model(
                 node_number, node_features, bert_var, pseudo_dis, Res_matrix,
@@ -169,11 +170,20 @@ def save_baseline_figures(y_true: np.ndarray, y_prob: np.ndarray, output_dir: st
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Baseline Evaluation for EGCPPIS")
+    parser.add_argument("--checkpoint", type=str, default=os.path.join(REPO_ROOT, "model_save", "best_model_8_0.6406474225359946.pth"), help="Path to model checkpoint")
+    parser.add_argument("--threshold", type=float, default=0.33, help="Decision threshold")
+    args = parser.parse_args()
+
     set_seed(42)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Executing baseline evaluation on device: {device}")
 
-    checkpoint_path = os.path.join(REPO_ROOT, "model_save", "best_model_27_0.6545215546121214.pth")
+    checkpoint_path = args.checkpoint
+    if not os.path.exists(checkpoint_path):
+        checkpoint_path = os.path.join(REPO_ROOT, "model_save", "best_model_8_0.6406474225359946.pth")
+    if not os.path.exists(checkpoint_path):
+        checkpoint_path = os.path.join(REPO_ROOT, "model_save", "best_model_13_0.630814106504997.pth")
     if not os.path.exists(checkpoint_path):
         checkpoint_path = os.path.join(REPO_ROOT, "model_save", "best_model.pth")
     

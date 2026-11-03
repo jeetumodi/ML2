@@ -80,7 +80,7 @@ def eval_epoch(model, loader, print_freq=Freq, is_test=True):
                 atom_onehot_embedding = torch.autograd.Variable(atom_onehot_embedding).float()  # .float()
                 edge_index_atom = torch.autograd.Variable(edge_index_atom)
                 coords_atom = torch.autograd.Variable(coords_atom)
-                res2atom = torch.autograd.Variable(res2atom.float())
+                res2atom = torch.autograd.Variable(res2atom.to(torch.int64))
 
                 target_var = torch.autograd.Variable(label)  # .float()
                 seq_var = torch.autograd.Variable(seq_data.float())
@@ -181,8 +181,8 @@ def train(model, train_data_set, valid_data_set, n_epochs=10, batch_size=32, see
 
 
 def main():
-    file_path_train ="Dataset/DeepPPISP/Test_70.fa"
-    file_path_varify = "Dataset/DeepPPISP/Test_70.fa"
+    file_path_train = "Datasets/DeepPPISP/Test_70.fa"
+    file_path_varify = "Datasets/DeepPPISP/Test_70.fa"
     train_dataSet = ProDataset(file_path_train)
     varify_dataSet = ProDataset(file_path_varify)
 

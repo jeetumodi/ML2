@@ -11,6 +11,26 @@ import os
 import time
 from torch.nn.parameter import Parameter
 import pickle
+import sys
+
+# NumPy 2.x to 1.x compatibility shim for unpickling
+if not hasattr(np, '_core') and hasattr(np, 'core'):
+    sys.modules['numpy._core'] = np.core
+    sys.modules['numpy._core.numeric'] = np.core.numeric
+    sys.modules['numpy._core.multiarray'] = np.core.multiarray
+
+class CompatUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if module.startswith("numpy._core"):
+            module = module.replace("numpy._core", "numpy.core", 1)
+        return super().find_class(module, name)
+
+def safe_pickle_load(f):
+    try:
+        return pickle.load(f)
+    except (ModuleNotFoundError, AttributeError):
+        f.seek(0)
+        return CompatUnpickler(f).load()
 
 from torch_geometric.utils import dense_to_sparse
 
@@ -28,7 +48,7 @@ def getID(file_path):
     labels=[]
     sequences=[]
 
-    with open(file_path, 'r') as file:
+    with open(file_path if os.path.exists(file_path) else (file_path.replace("Dataset/", "Datasets/", 1) if file_path.startswith("Dataset/") else file_path), 'r') as file:
         lines = file.readlines()
 
     for i in range(0, len(lines), 3):
@@ -141,7 +161,7 @@ class ProDataset(Dataset):
                 if os.path.exists(pse_file):
                     try:
                         with open(pse_file, 'rb') as f:
-                            ProDataset._psepos_cache.update(pickle.load(f))
+                            ProDataset._psepos_cache.update(safe_pickle_load(f))
                     except Exception:
                         pass
 
@@ -173,11 +193,21 @@ class ProDataset(Dataset):
         # for other Datasets
         # Atom_path="Tenx/HSSPPI/Atom_model_Test287/" + protein_id + ".pkl"
         # 原子特征和原子-残基映射关系
-        Atom_path = "Tenx/HSSPPI/Atom_model_TestUB25/" + protein_id + ".pkl"
+        repo_dir = os.path.dirname(os.path.abspath(__file__))
+        atom_candidates = [
+            os.path.join(repo_dir, "Atom_model", f"{protein_id}.pkl"),
+            os.path.join("Atom_model", f"{protein_id}.pkl"),
+            f"Tenx/HSSPPI/Atom_model/{protein_id}.pkl",
+            f"Tenx/HSSPPI/Atom_model_TestUB25/{protein_id}.pkl",
+            f"Tenx/HSSPPI/Atom_model_Test287/{protein_id}.pkl",
+        ]
+        Atom_path = next((p for p in atom_candidates if os.path.exists(p)), None)
 
-        if os.path.exists(Atom_path):
+
+
+        if Atom_path:
             with open(Atom_path, 'rb') as f:
-                atom_data = pickle.load(f)
+                atom_data = safe_pickle_load(f)
                 atom_graph_node = np.array(atom_data['atom_graph_node'])
                 atom_graph_edge = np.array(atom_data['atom_graph_edge'])
                 atom_graph_edge = torch.LongTensor(atom_graph_edge)

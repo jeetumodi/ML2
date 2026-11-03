@@ -75,7 +75,7 @@ class MCDropoutInference:
             atom_onehot_embedding = atom_onehot_embedding.cuda().float()
             edge_index_atom = edge_index_atom.cuda()
             coords_atom = coords_atom.cuda().float()
-            res2atom = res2atom.cuda()
+            res2atom = res2atom.cuda().to(torch.int64)
         else:
             node_features = node_features.float()
             bert_var = bert_data.float()
@@ -84,7 +84,7 @@ class MCDropoutInference:
             atom_onehot_embedding = atom_onehot_embedding.float()
             edge_index_atom = edge_index_atom
             coords_atom = coords_atom.float()
-            res2atom = res2atom.float()
+            res2atom = res2atom.to(torch.int64)
 
         enable_dropout_layers_only(self.model)
 

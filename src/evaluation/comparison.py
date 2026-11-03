@@ -202,7 +202,7 @@ def main():
     # ==========================================
     calib_rows = [
         {"method": "Raw Baseline", **n1_summary["metrics_raw"]},
-        {"method": "Temperature Scaling (T=1.8674)", **n1_summary["metrics_temperature_calibrated"]},
+        {"method": f"Temperature Scaling (T*={n1_summary['optimal_temperature_T']:.4f})", **n1_summary["metrics_temperature_calibrated"]},
         {"method": "Platt Scaling", **n1_summary["metrics_platt_calibrated"]},
         {"method": "Isotonic Regression", **n1_summary["metrics_isotonic_calibrated"]},
         {"method": "MC-Dropout Mean (T=20)", **n1_summary["metrics_mc_dropout"]}

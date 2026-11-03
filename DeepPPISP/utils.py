@@ -11,6 +11,26 @@ import os
 import time
 from torch.nn.parameter import Parameter
 import pickle
+import sys
+
+# NumPy 2.x to 1.x compatibility shim for unpickling
+if not hasattr(np, '_core') and hasattr(np, 'core'):
+    sys.modules['numpy._core'] = np.core
+    sys.modules['numpy._core.numeric'] = np.core.numeric
+    sys.modules['numpy._core.multiarray'] = np.core.multiarray
+
+class CompatUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        if module.startswith("numpy._core"):
+            module = module.replace("numpy._core", "numpy.core", 1)
+        return super().find_class(module, name)
+
+def safe_pickle_load(f):
+    try:
+        return pickle.load(f)
+    except (ModuleNotFoundError, AttributeError):
+        f.seek(0)
+        return CompatUnpickler(f).load()
 
 from torch_geometric.utils import dense_to_sparse
 
@@ -28,7 +48,7 @@ def getID(file_path):
     labels=[]
     sequences=[]
 
-    with open(file_path, 'r') as file:
+    with open(file_path if os.path.exists(file_path) else (file_path.replace("Dataset/", "Datasets/", 1) if file_path.startswith("Dataset/") else file_path), 'r') as file:
         lines = file.readlines()
 
     for i in range(0, len(lines), 3):
@@ -164,14 +184,31 @@ class ProDataset(Dataset):
 
 
         # 原子特征和原子-残基映射关系
-        Atom_path="Tenx/HSSPPI/Atom_model_Train352_Test70/" + protein_id + ".pkl"
-        with open(Atom_path, 'rb') as f:
-            atom_data = pickle.load(f)
-            atom_graph_node=np.array(atom_data['atom_graph_node'])
-            atom_graph_edge=np.array(atom_data['atom_graph_edge'])
-            atom_graph_edge = torch.LongTensor(atom_graph_edge)
+        repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        atom_candidates = [
+            os.path.join(repo_dir, "Atom_model", f"{protein_id}.pkl"),
+            os.path.join(repo_dir, "Atom_model", f"{modified_id}.pkl"),
+            os.path.join("Atom_model", f"{protein_id}.pkl"),
+            os.path.join("Atom_model", f"{modified_id}.pkl"),
+            f"Tenx/HSSPPI/Atom_model_Train352_Test70/{protein_id}.pkl"
+        ]
+        Atom_path = next((p for p in atom_candidates if os.path.exists(p)), None)
 
-            a2r_map=np.array(atom_data['a2r_map'])
+
+
+
+        if Atom_path:
+            with open(Atom_path, 'rb') as f:
+                atom_data = safe_pickle_load(f)
+                atom_graph_node=np.array(atom_data['atom_graph_node'])
+                atom_graph_edge=np.array(atom_data['atom_graph_edge'])
+                atom_graph_edge = torch.LongTensor(atom_graph_edge)
+                a2r_map=np.array(atom_data['a2r_map'])
+        else:
+            atom_graph_node = np.zeros((len(seq), 37), dtype=np.float32)
+            atom_graph_node[:, 0] = 1.0
+            atom_graph_edge = torch.stack([torch.arange(len(seq)), torch.arange(len(seq))], dim=0).to(torch.int64)
+            a2r_map = np.arange(len(seq), dtype=np.int64)
         # atom_xyz = np.load(f'../Feature/PDB/atom_data/atom_xyz/{protein_id}.npy')  # 原子坐标
         return seq,dssp,    atom_graph_node,atom_graph_edge,a2r_map,    bert,psepos,distance_map,distance,   n_fea, np.array(label),seq, seq
 

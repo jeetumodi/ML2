@@ -42,66 +42,66 @@ def eval_epoch(model, loader, print_freq=Freq, is_test=True):
     all_preds = []
     end = time.time()
 
-    for batch_idx, (
-            seq_data, dssp_data, atom_onehot_embedding, edge_index_atom, res2atom, bert_data, pseudo_dis, dis_data,
-            Res_matrix, node_features, label, coords_atom, seq1) in enumerate(loader):
-        node_number = np.array(seq_data)[0].shape[0]
+    with torch.no_grad():
+        for batch_idx, (
+                seq_data, dssp_data, atom_onehot_embedding, edge_index_atom, res2atom, bert_data, pseudo_dis, dis_data,
+                Res_matrix, node_features, label, coords_atom, seq1) in enumerate(loader):
+            node_number = np.array(seq_data)[0].shape[0]
 
-        # 将密集矩阵转换为稀疏表示
-        edge_index1, _ = dense_to_sparse(dis_data)
-        edge_index = edge_index1.to(torch.int64)  # .t()
+            # Convert dense matrix to sparse representation
+            edge_index1, _ = dense_to_sparse(dis_data)
+            edge_index = edge_index1.to(torch.int64)
 
-        # Create vaiables
-        with torch.no_grad():
+            # Move tensors to device
             if torch.cuda.is_available():
+                node_features = node_features.cuda().float()
+                bert_var = bert_data.cuda().float()
+                pseudo_dis = pseudo_dis.cuda().float()
+                Res_matrix = Res_matrix.cuda().float()
 
-                node_features = torch.autograd.Variable(node_features.cuda().float())
-                bert_var = torch.autograd.Variable(bert_data.cuda().float())
-                pseudo_dis = torch.autograd.Variable(pseudo_dis.cuda().float())  # .float())
-                Res_matrix = torch.autograd.Variable(Res_matrix.cuda().float())  # .float()
+                atom_onehot_embedding = atom_onehot_embedding.cuda().float()
+                edge_index_atom = edge_index_atom.cuda()
+                coords_atom = coords_atom.cuda().float()
+                res2atom = res2atom.cuda()
 
-                atom_onehot_embedding = torch.autograd.Variable(atom_onehot_embedding.cuda().float())  # .float()
-                edge_index_atom = torch.autograd.Variable(edge_index_atom.cuda())
-                coords_atom = torch.autograd.Variable(coords_atom.cuda().float())
-                res2atom = torch.autograd.Variable(res2atom.cuda())
-
-                target_var = torch.autograd.Variable(label.cuda())  # .float()
-                seq_var = torch.autograd.Variable(seq_data.cuda().float())
-
+                target_var = label.cuda()
+                seq_var = seq_data.cuda().float()
             else:
-                node_features = torch.autograd.Variable(node_features.float())
-                bert_var = torch.autograd.Variable(bert_data.float())
-                pseudo_dis = torch.autograd.Variable(pseudo_dis.float())
-                Res_matrix = torch.autograd.Variable(Res_matrix).float()  # .float()
+                node_features = node_features.float()
+                bert_var = bert_data.float()
+                pseudo_dis = pseudo_dis.float()
+                Res_matrix = Res_matrix.float()
 
-                atom_onehot_embedding = torch.autograd.Variable(atom_onehot_embedding).float()  # .float()
-                edge_index_atom = torch.autograd.Variable(edge_index_atom)
-                coords_atom = torch.autograd.Variable(coords_atom)
-                res2atom = torch.autograd.Variable(res2atom.float())
+                atom_onehot_embedding = atom_onehot_embedding.float()
+                edge_index_atom = edge_index_atom
+                coords_atom = coords_atom
+                res2atom = res2atom.float()
 
-                target_var = torch.autograd.Variable(label)  # .float()
-                seq_var = torch.autograd.Variable(seq_data.float())
+                target_var = label
+                seq_var = seq_data.float()
 
-        # compute output
-        output, cl_loss = model(node_number, node_features, bert_var, pseudo_dis, Res_matrix, atom_onehot_embedding,
-                                edge_index_atom, res2atom, coords_atom, )
+            # Compute output without building autograd graph
+            output, cl_loss = model(node_number, node_features, bert_var, pseudo_dis, Res_matrix, atom_onehot_embedding,
+                                    edge_index_atom, res2atom, coords_atom)
 
-        output = output.transpose(0, 1)
+            output = output.transpose(0, 1)
 
-        loss = torch.nn.functional.binary_cross_entropy(output, target_var.float())  # .cuda()
-        loss = loss + cl_loss *0.1
+            loss = torch.nn.functional.binary_cross_entropy(output, target_var.float())
+            loss = loss + cl_loss * 0.1
 
+            # Measure accuracy and record loss
+            batch_size = label.size(0)
+            losses.update(loss.item(), batch_size)
 
-        # measure accuracy and record loss
-        batch_size = label.size(0)
-        losses.update(loss.item(), batch_size)
+            # Measure elapsed time
+            batch_time.update(time.time() - end)
+            end = time.time()
 
-        # measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
+            all_trues.append(label.numpy())
+            all_preds.append(output.data.cpu().numpy())
 
-        all_trues.append(label.numpy())
-        all_preds.append(output.data.cpu().numpy())  # 使用教师模型的输出：output
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
     trues, preds, preds_pLM = [], [], []
     for i in range(len(all_trues)):
@@ -177,13 +177,13 @@ def train(model, train_data_set, valid_data_set, n_epochs=10, batch_size=32, see
 
 
 def main():
-    file_path_train = "Dataset/Train_335.fa"
-    file_path_varify = "Dataset/Test_60.fa"
+    file_path_train = "Datasets/Train_335.fa"
+    file_path_varify = "Datasets/Test_60.fa"
     train_dataSet = ProDataset(file_path_train)
     varify_dataSet = ProDataset(file_path_varify)
 
     model = PPI_Model()
-    model.load_state_dict(torch.load("model_save/best_model_27_0.6545215546121214.pth"))
+    model.load_state_dict(torch.load("model_save/best_model_13_0.630814106504997.pth"))
 
     # Train the model
     train(model=model, train_data_set=train_dataSet, valid_data_set=varify_dataSet, n_epochs=60, batch_size=32)

@@ -10,7 +10,7 @@
     "output_shape": [
       40
     ],
-    "loss_value": 0.7632705569267273,
+    "loss_value": 0.7695955038070679,
     "gradients_computed": true,
     "test_status": "PASSED"
   },

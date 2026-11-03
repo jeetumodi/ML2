@@ -17,6 +17,9 @@ einops=0.7.0
 The preprocessed embedding file can be obtained from the following link：https://drive.google.com/drive/folders/1ahBAePK0waZJ82LR1NVMHx4mlS8zLowa
 
 
+# Atomic Graph Representations
+The atomic features (Atom_model/) contain precomputed 37-dimensional atom graph node features, edge connections, and atom-to-residue mapping (2r_map) across benchmark proteins. When present in Atom_model/, they are automatically resolved and utilized by the hierarchical GraphSAGE module.
+
 # Code Structure Description
 To enhance reproducibility, we provide a detailed description of the files included in the GitHub repository:
 
@@ -33,6 +36,8 @@ evaluation.py: Contains performance evaluation functions, including accuracy, pr
 utils.py: Provides general utility functions such as data preprocessing, feature normalization, and graph construction.
 
 utils_Test.py: Contains helper functions for inference and test-stage operations.
+
+Datasets/: Contains benchmark FASTA files and evaluation splits (Train_335, Test_60, GraphPPIS, and DeepPPISP benchmarks).
 
 Test_31.py, Test_60.py, Test_315.py: Independent test scripts for different datasets or experimental configurations.
 
