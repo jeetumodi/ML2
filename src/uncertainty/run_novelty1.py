@@ -16,7 +16,10 @@ import argparse
 import numpy as np
 import pandas as pd
 import torch
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
 from sklearn import metrics as sk_metrics
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -39,6 +42,8 @@ def plot_reliability_diagrams(raw_data, calib_data, mc_data, out_path, ece_raw, 
     """
     Plots multi-panel calibration curves (reliability diagrams) comparing Raw, Calibrated, and MC-Dropout.
     """
+    if plt is None:
+        return
     fig, axes = plt.subplots(1, 3, figsize=(15, 4.5), sharey=True)
     configs = [
         (axes[0], raw_data, f"Raw Uncalibrated (ECE = {ece_raw:.4f})", "#1f77b4"),
@@ -84,6 +89,8 @@ def plot_uncertainty_diagnostics(
     """
     Generates diagnostic figures for uncertainty distributions, error detection, and risk-coverage.
     """
+    if plt is None:
+        return
     y_pred = (y_prob >= threshold).astype(int)
     errors = (y_pred != y_true).astype(int)
     variance = uncertainty_dict["concat_variance"]

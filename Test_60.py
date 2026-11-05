@@ -183,7 +183,7 @@ def main():
     varify_dataSet = ProDataset(file_path_varify)
 
     model = PPI_Model()
-    model.load_state_dict(torch.load("model_save/best_model_13_0.630814106504997.pth"))
+    model.load_state_dict(torch.load("model_save/best_model_13_0.630814106504997.pth", map_location=device))
 
     # Train the model
     train(model=model, train_data_set=train_dataSet, valid_data_set=varify_dataSet, n_epochs=60, batch_size=32)

@@ -49,6 +49,8 @@ def test_cross_protein_forward():
 
 def test_data_validator_on_single_chain():
     # Single chain benchmark should be rejected as partner-conditioned
-    res = validate_file_for_paired_condition("Datasets/Test_60.fa")
+    import os
+    fa_path = "Datasets/Test_60.fa" if os.path.exists("Datasets/Test_60.fa") else "ML2/Datasets/Test_60.fa"
+    res = validate_file_for_paired_condition(fa_path)
     assert res["is_paired"] is False
     assert res["status"] == "REJECTED_PARTNER_INDEPENDENT_ONLY"

@@ -15,7 +15,10 @@ import sys
 import json
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if REPO_ROOT not in sys.path:
@@ -140,40 +143,41 @@ def main():
     curve_b = compute_cumulative_recall_curve(trues_60_list, scores_strat_b, max_k=40)
     curve_c = compute_cumulative_recall_curve(trues_60_list, scores_strat_c, max_k=40)
 
-    plt.figure(figsize=(7, 5))
-    plt.plot(curve_a["budgets"], curve_a["mean_recall"], color="#1f77b4", lw=2.5, label="Strategy A: Probability-Only")
-    plt.plot(curve_b["budgets"], curve_b["mean_recall"], color="#2ca02c", lw=2.5, linestyle="--", label=f"Strategy B: LCB (lambda={best_lambda})")
-    plt.plot(curve_c["budgets"], curve_c["mean_recall"], color="#d62728", lw=2, linestyle=":", label="Strategy C: Uncertainty Filtered")
-    plt.xlabel("Experimental Screening Budget K (Residues per Protein)", fontsize=11)
-    plt.ylabel("Mean Cumulative Recall Across Proteins", fontsize=11)
-    plt.title("Cumulative Interface Recall vs Screening Budget (Test_60)", fontsize=12, fontweight="bold")
-    plt.grid(True, linestyle=":", alpha=0.5)
-    plt.legend(loc="lower right", fontsize=10)
-    plt.tight_layout()
-    plt.savefig(os.path.join(out_dir, "cumulative_recall_vs_budget.png"), dpi=300)
-    plt.close()
+    if plt is not None:
+        plt.figure(figsize=(7, 5))
+        plt.plot(curve_a["budgets"], curve_a["mean_recall"], color="#1f77b4", lw=2.5, label="Strategy A: Probability-Only")
+        plt.plot(curve_b["budgets"], curve_b["mean_recall"], color="#2ca02c", lw=2.5, linestyle="--", label=f"Strategy B: LCB (lambda={best_lambda})")
+        plt.plot(curve_c["budgets"], curve_c["mean_recall"], color="#d62728", lw=2, linestyle=":", label="Strategy C: Uncertainty Filtered")
+        plt.xlabel("Experimental Screening Budget K (Residues per Protein)", fontsize=11)
+        plt.ylabel("Mean Cumulative Recall Across Proteins", fontsize=11)
+        plt.title("Cumulative Interface Recall vs Screening Budget (Test_60)", fontsize=12, fontweight="bold")
+        plt.grid(True, linestyle=":", alpha=0.5)
+        plt.legend(loc="lower right", fontsize=10)
+        plt.tight_layout()
+        plt.savefig(os.path.join(out_dir, "cumulative_recall_vs_budget.png"), dpi=300)
+        plt.close()
 
-    # 7. Precision@K Comparison Bar Plot
-    k_labels = ["Top-5", "Top-10", "Top-20"]
-    x = np.arange(len(k_labels))
-    width = 0.25
+        # 7. Precision@K Comparison Bar Plot
+        k_labels = ["Top-5", "Top-10", "Top-20"]
+        x = np.arange(len(k_labels))
+        width = 0.25
 
-    p_a = [res_strat_a[f"mean_precision_at_{k}"] for k in [5, 10, 20]]
-    p_b = [res_strat_b[f"mean_precision_at_{k}"] for k in [5, 10, 20]]
-    p_c = [res_strat_c[f"mean_precision_at_{k}"] for k in [5, 10, 20]]
+        p_a = [res_strat_a[f"mean_precision_at_{k}"] for k in [5, 10, 20]]
+        p_b = [res_strat_b[f"mean_precision_at_{k}"] for k in [5, 10, 20]]
+        p_c = [res_strat_c[f"mean_precision_at_{k}"] for k in [5, 10, 20]]
 
-    plt.figure(figsize=(7, 4.5))
-    plt.bar(x - width, p_a, width, label="Strategy A (Prob-Only)", color="#1f77b4", alpha=0.85)
-    plt.bar(x, p_b, width, label=f"Strategy B (LCB lambda={best_lambda})", color="#2ca02c", alpha=0.85)
-    plt.bar(x + width, p_c, width, label="Strategy C (Unc-Filtered)", color="#d62728", alpha=0.85)
-    plt.xticks(x, k_labels, fontsize=11)
-    plt.ylabel("Mean Precision@K Across Proteins", fontsize=11)
-    plt.title("Candidate Prioritization Precision at Screening Budgets", fontsize=12, fontweight="bold")
-    plt.legend(loc="upper right", fontsize=10)
-    plt.grid(axis="y", linestyle=":", alpha=0.5)
-    plt.tight_layout()
-    plt.savefig(os.path.join(out_dir, "precision_at_k_comparison.png"), dpi=300)
-    plt.close()
+        plt.figure(figsize=(7, 4.5))
+        plt.bar(x - width, p_a, width, label="Strategy A (Prob-Only)", color="#1f77b4", alpha=0.85)
+        plt.bar(x, p_b, width, label=f"Strategy B (LCB lambda={best_lambda})", color="#2ca02c", alpha=0.85)
+        plt.bar(x + width, p_c, width, label="Strategy C (Unc-Filtered)", color="#d62728", alpha=0.85)
+        plt.xticks(x, k_labels, fontsize=11)
+        plt.ylabel("Mean Precision@K Across Proteins", fontsize=11)
+        plt.title("Candidate Prioritization Precision at Screening Budgets", fontsize=12, fontweight="bold")
+        plt.legend(loc="upper right", fontsize=10)
+        plt.grid(axis="y", linestyle=":", alpha=0.5)
+        plt.tight_layout()
+        plt.savefig(os.path.join(out_dir, "precision_at_k_comparison.png"), dpi=300)
+        plt.close()
 
     # 8. Real Protein Case Study
     # Pick a representative held-out protein where uncertainty penalized false positives (e.g. 2v9tA or 1a2yA)
@@ -199,27 +203,28 @@ def main():
     df_case.to_csv(os.path.join(out_dir, "case_study_protein.csv"), index=False)
 
     # Plot case study residue profiles
-    plt.figure(figsize=(10, 4.5))
-    plt.plot(df_case["residue_index"], df_case["prob_calibrated"], color="#1f77b4", lw=2, label="Calibrated Probability")
-    plt.fill_between(
-        df_case["residue_index"],
-        df_case["prob_calibrated"] - df_case["uncertainty_std"],
-        df_case["prob_calibrated"] + df_case["uncertainty_std"],
-        color="#1f77b4", alpha=0.2, label="+/- 1 Std Epistemic Uncertainty"
-    )
-    plt.scatter(
-        df_case["residue_index"][df_case["ground_truth"] == 1],
-        df_case["prob_calibrated"][df_case["ground_truth"] == 1],
-        color="#2ca02c", s=40, zorder=5, label="True Interface Residue (1)"
-    )
-    plt.axhline(0.33, color="red", linestyle=":", label="Classification Threshold (0.33)")
-    plt.xlabel("Residue Position Index", fontsize=11)
-    plt.ylabel("Calibrated Probability / Uncertainty", fontsize=11)
-    plt.title(f"Case Study Profile: Held-Out Protein {case_pid} (Length {len(case_true)})", fontsize=12, fontweight="bold")
-    plt.legend(loc="upper right", fontsize=9)
-    plt.tight_layout()
-    plt.savefig(os.path.join(out_dir, "case_study_protein.png"), dpi=300)
-    plt.close()
+    if plt is not None:
+        plt.figure(figsize=(10, 4.5))
+        plt.plot(df_case["residue_index"], df_case["prob_calibrated"], color="#1f77b4", lw=2, label="Calibrated Probability")
+        plt.fill_between(
+            df_case["residue_index"],
+            df_case["prob_calibrated"] - df_case["uncertainty_std"],
+            df_case["prob_calibrated"] + df_case["uncertainty_std"],
+            color="#1f77b4", alpha=0.2, label="+/- 1 Std Epistemic Uncertainty"
+        )
+        plt.scatter(
+            df_case["residue_index"][df_case["ground_truth"] == 1],
+            df_case["prob_calibrated"][df_case["ground_truth"] == 1],
+            color="#2ca02c", s=40, zorder=5, label="True Interface Residue (1)"
+        )
+        plt.axhline(0.33, color="red", linestyle=":", label="Classification Threshold (0.33)")
+        plt.xlabel("Residue Position Index", fontsize=11)
+        plt.ylabel("Calibrated Probability / Uncertainty", fontsize=11)
+        plt.title(f"Case Study Profile: Held-Out Protein {case_pid} (Length {len(case_true)})", fontsize=12, fontweight="bold")
+        plt.legend(loc="upper right", fontsize=9)
+        plt.tight_layout()
+        plt.savefig(os.path.join(out_dir, "case_study_protein.png"), dpi=300)
+        plt.close()
 
     # 9. Save JSON Summary
     summary = {

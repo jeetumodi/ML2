@@ -18,7 +18,10 @@ import argparse
 import numpy as np
 import pandas as pd
 import torch
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
 from sklearn import metrics as sk_metrics
 
 # Add root directory to path
@@ -122,6 +125,9 @@ def save_baseline_figures(y_true: np.ndarray, y_prob: np.ndarray, output_dir: st
     """
     Generates ROC curve, PR curve, and score distribution figures.
     """
+    if plt is None:
+        print(f"Skipping plot generation for {prefix} (matplotlib not installed in environment)")
+        return
     os.makedirs(output_dir, exist_ok=True)
     plt.style.use("seaborn-v0_8-whitegrid" if "seaborn-v0_8-whitegrid" in plt.style.available else "default")
 
