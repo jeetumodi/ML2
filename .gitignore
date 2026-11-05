@@ -27,7 +27,7 @@ desktop.ini
 *~
 
 # Local atom features & logs
-Atom_model/
+# Atom_model/
 *.log
 
 # Training runtime checkpoints
